@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Transaksi - Dashboard Keuangan Pribadi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        .dark .skeleton {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 200% 100%;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .slide-in {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .slide-in.open {
+            transform: translateX(0);
+        }
+
+        .filter-dropdown {
+            transform: translateY(-10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .filter-dropdown.show {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .transaction-item {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .transaction-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .transaction-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .pagination-btn {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .search-input:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 font-sans transition-colors duration-300">
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed top-0 right-0 lg:left-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl z-50 slide-in lg:slide-in lg:open lg:transform-none lg:transition-none">
+        <div class="p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-wallet text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-800 dark:text-white">Keuangan Saya</h1>
+                </div>
+                <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="space-y-2">
+                <a href="dashboard.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="transaksi.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Tambah Transaksi</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-3 rounded-lg">
+                    <i class="fas fa-history"></i>
+                    <span class="font-medium">Riwayat Transaksi</span>
+                </a>
+                <a href="kategori.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Kategori</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-cog"></i>
+                    <span>Pengaturan</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lg:ml-80 min-h-screen">
+        <!-- Top Bar -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Riwayat Transaksi</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mt-1">Lihat dan kelola semua transaksi Anda</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Dark Mode Toggle -->
+                        <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:block"></i>
+                        </button>
+                        <!-- Mobile Menu Button -->
+                        <button id="mobileMenuButton" class="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Transaction History Content -->
+        <main class="p-6 space-y-6">
+            <!-- Filter and Search Section -->
+            <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
+                    <!-- Search Bar -->
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="searchInput" placeholder="Cari transaksi..." 
+                               class="search-input w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    </div>
+                    
+                    <!-- Filter Buttons -->
+                    <div class="flex flex-wrap gap-3">
+                        <!-- Type Filter -->
+                        <div class="relative">
+                            <button id="typeFilterBtn" class="flex items-center space-x-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                <i class="fas fa-filter text-sm"></i>
+                                <span id="typeFilterText">Semua Tipe</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            <div id="typeFilterDropdown" class="filter-dropdown absolute right-0 top-12 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                                <div class="p-2">
+                                    <button class="type-filter w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" data-value="">
+                                        Semua Tipe
+                                    </button>
+                                    <button class="type-filter w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-green-600 dark:text-green-400" data-value="income">
+                                        <i class="fas fa-arrow-up mr-2"></i>Pemasukan
+                                    </button>
+                                    <button class="type-filter w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-red-600 dark:text-red-400" data-value="expense">
+                                        <i class="fas fa-arrow-down mr-2"></i>Pengeluaran
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="relative">
+                            <button id="categoryFilterBtn" class="flex items-center space-x-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                <i class="fas fa-tag text-sm"></i>
+                                <span id="categoryFilterText">Semua Kategori</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            <div id="categoryFilterDropdown" class="filter-dropdown absolute right-0 top-12 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                                <div class="p-2">
+                                    <button class="category-filter w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" data-value="">
+                                        Semua Kategori
+                                    </button>
+                                    <button class="category-filter w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" data-value="Gaji">
+                                        <i class="fas fa-briefcase mr-2"></i>Gaji
+                                    </button>
+                                    <button class="category-filter w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" data-value="Freelance">
+                                        <i class="fas fa-laptop-code mr-2"></i>Freelance
+                                    </button>
+                                    <button class="category-filter w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" data-value="Belanja">
+                                        <i class="fas fa-shopping-cart mr-2"></i>Belanja
+                                    </button>
+                                    <button class="category-filter w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" data-value="Makanan">
+                                        <i class="fas fa-utensils mr-2"></i>Makanan
+                                    </button>
+                                    <button class="category-filter w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" data-value="Transportasi">
+                                        <i class="fas fa-car mr-2"></i>Transportasi
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clear Filters -->
+                        <button id="clearFilters" class="px-4 py-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+                            <i class="fas fa-times mr-2"></i>Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Summary Stats -->
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-green-600 dark:text-green-400 font-medium">Total Pemasukan</p>
+                                <p id="totalIncome" class="text-lg font-bold text-green-700 dark:text-green-300">Rp 0</p>
+                            </div>
+                            <i class="fas fa-arrow-up text-green-600 dark:text-green-400 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-red-600 dark:text-red-400 font-medium">Total Pengeluaran</p>
+                                <p id="totalExpense" class="text-lg font-bold text-red-700 dark:text-red-300">Rp 0</p>
+                            </div>
+                            <i class="fas fa-arrow-down text-red-600 dark:text-red-400 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-blue-600 dark:text-blue-400 font-medium">Jumlah Transaksi</p>
+                                <p id="totalTransactions" class="text-lg font-bold text-blue-700 dark:text-blue-300">0</p>
+                            </div>
+                            <i class="fas fa-list text-blue-600 dark:text-blue-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transaction List -->
+            <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Daftar Transaksi</h3>
+                        <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                            <span>Menampilkan</span>
+                            <select id="itemsPerPage" class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span>dari <span id="totalItemsCount">0</span> transaksi</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transaction Items -->
+                <div id="transactionContainer" class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <!-- Loading skeleton will be replaced by actual transactions -->
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <!-- Loading skeletons -->
+                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <div class="flex items-center space-x-4">
+                                    <div class="skeleton w-12 h-12 rounded-lg"></div>
+                                    <div>
+                                        <div class="skeleton h-4 w-32 rounded mb-2"></div>
+                                        <div class="skeleton h-3 w-24 rounded"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="skeleton h-4 w-24 rounded mb-2"></div>
+                                    <div class="skeleton h-3 w-16 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <div class="flex items-center space-x-4">
+                                    <div class="skeleton w-12 h-12 rounded-lg"></div>
+                                    <div>
+                                        <div class="skeleton h-4 w-32 rounded mb-2"></div>
+                                        <div class="skeleton h-3 w-24 rounded"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="skeleton h-4 w-24 rounded mb-2"></div>
+                                    <div class="skeleton h-3 w-16 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <div class="flex items-center space-x-4">
+                                    <div class="skeleton w-12 h-12 rounded-lg"></div>
+                                    <div>
+                                        <div class="skeleton h-4 w-32 rounded mb-2"></div>
+                                        <div class="skeleton h-3 w-24 rounded"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="skeleton h-4 w-24 rounded mb-2"></div>
+                                    <div class="skeleton h-3 w-16 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="paginationContainer" class="p-6 border-t border-gray-200 dark:border-gray-700" style="display: none;">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            Menampilkan <span id="startItem">0</span> - <span id="endItem">0</span> dari <span id="totalItems">0</span> transaksi
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="prevPage" class="pagination-btn px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                                <i class="fas fa-chevron-left mr-1"></i>Sebelumnya
+                            </button>
+                            <div id="pageNumbers" class="flex space-x-1"></div>
+                            <button id="nextPage" class="pagination-btn px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                Selanjutnya<i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Global variables
+        let allTransactions = [];
+        let filteredTransactions = [];
+        let currentPage = 1;
+        let itemsPerPage = 10;
+        let currentFilters = {
+            search: '',
+            type: '',
+            category: ''
+        };
+
+        // Sample transaction data
+        const sampleTransactions = [
+            { id: 1, date: '2025-06-28', category: 'Gaji', description: 'Gaji bulanan', amount: 5000000, type: 'income', icon: 'fas fa-briefcase' },
+            { id: 2, date: '2025-06-27', category: 'Belanja', description: 'Belanja bulanan', amount: 750000, type: 'expense', icon: 'fas fa-shopping-cart' },
+            { id: 3, date: '2025-06-26', category: 'Freelance', description: 'Proyek website', amount: 1500000, type: 'income', icon: 'fas fa-laptop-code' },
+            { id: 4, date: '2025-06-25', category: 'Transportasi', description: 'Bensin motor', amount: 50000, type: 'expense', icon: 'fas fa-car' },
+            { id: 5, date: '2025-06-24', category: 'Makanan', description: 'Makan siang', amount: 45000, type: 'expense', icon: 'fas fa-utensils' },
+            { id: 6, date: '2025-06-23', category: 'Freelance', description: 'Konsultasi IT', amount: 800000, type: 'income', icon: 'fas fa-laptop-code' },
+            { id: 7, date: '2025-06-22', category: 'Belanja', description: 'Keperluan rumah', amount: 200000, type: 'expense', icon: 'fas fa-shopping-cart' },
+            { id: 8, date: '2025-06-21', category: 'Transportasi', description: 'Grab online', amount: 25000, type: 'expense', icon: 'fas fa-car' },
+            { id: 9, date: '2025-06-20', category: 'Makanan', description: 'Dinner keluarga', amount: 150000, type: 'expense', icon: 'fas fa-utensils' },
+            { id: 10, date: '2025-06-19', category: 'Gaji', description: 'Bonus proyek', amount: 2000000, type: 'income', icon: 'fas fa-briefcase' },
+            { id: 11, date: '2025-06-18', category: 'Belanja', description: 'Beli pakaian', amount: 300000, type: 'expense', icon: 'fas fa-shopping-cart' },
+            { id: 12, date: '2025-06-17', category: 'Freelance', description: 'Design logo', amount: 500000, type: 'income', icon: 'fas fa-laptop-code' },
+            { id: 13, date: '2025-06-16', category: 'Transportasi', description: 'Service motor', amount: 150000, type: 'expense', icon: 'fas fa-car' },
+            { id: 14, date: '2025-06-15', category: 'Makanan', description: 'Groceries', amount: 200000, type: 'expense', icon: 'fas fa-utensils' },
+            { id: 15, date: '2025-06-14', category: 'Freelance', description: 'Maintenance web', amount: 600000, type: 'income', icon: 'fas fa-laptop-code' }
+        ];
+
+        // Dark mode functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const html = document.documentElement;
+        
+        darkModeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+        });
+        
+        // Mobile menu functionality
+        const mobileMenuButton = document.getElementById('mobileMenuButton');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            sidebar.classList.add('open');
+            mobileOverlay.classList.remove('hidden');
+        });
+        
+        closeSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            mobileOverlay.classList.add('hidden');
+        });
+        
+        mobileOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            mobileOverlay.classList.add('hidden');
+        });
+
+        // Filter dropdown functionality
+        function setupDropdown(buttonId, dropdownId, items, textId, filterKey) {
+            const button = document.getElementById(buttonId);
+            const dropdown = document.getElementById(dropdownId);
+            const text = document.getElementById(textId);
+            
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('show');
+            });
+            
+            items.forEach(item => {
+                item.addEventListener('click', () => {
+                    const value = item.dataset.value;
+                    currentFilters[filterKey] = value;
+                    text.textContent = item.textContent.trim();
+                    dropdown.classList.remove('show');
+                    applyFilters();
+                });
+            });
+        }
+
+        // Setup filter dropdowns
+        setupDropdown('typeFilterBtn', 'typeFilterDropdown', 
+                     document.querySelectorAll('.type-filter'), 'typeFilterText', 'type');
+        setupDropdown('categoryFilterBtn', 'categoryFilterDropdown', 
+                     document.querySelectorAll('.category-filter'), 'categoryFilterText', 'category');
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            currentFilters.search = e.target.value.toLowerCase();
+            applyFilters();
+        });
+
+        // Clear filters
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            currentFilters = { search: '', type: '', category: '' };
+            document.getElementById('searchInput').value = '';
+            document.getElementById('typeFilterText').textContent = 'Semua Tipe';
+            document.getElementById('categoryFilterText').textContent = 'Semua Kategori';
+            applyFilters();
+        });
+
+        // Items per page
+        document.getElementById('itemsPerPage').addEventListener('change', (e) => {
+            itemsPerPage = parseInt(e.target.value);
+            currentPage = 1;
+            renderTransactions();
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.filter-dropdown').forEach(dropdown => {
+                dropdown.classList.remove('show');
+            });
+        });
+
+         // Apply filters
+    function applyFilters() {
+      filteredTransactions = allTransactions.filter(transaction => {
+        const matchesSearch = !currentFilters.search || 
+          transaction.category.toLowerCase().includes(currentFilters.search) ||
+          transaction.description.toLowerCase().includes(currentFilters.search);
+
+        const matchesType = !currentFilters.type || transaction.type === currentFilters.type;
+        const matchesCategory = !currentFilters.category || transaction.category === currentFilters.category;
+
+        return matchesSearch && matchesType && matchesCategory;
+      });
+
+      currentPage = 1;
+      updateSummary();
+      renderTransactions();
+    }
+
+    // Update summary cards
+    function updateSummary() {
+      const income = filteredTransactions
+        .filter(t => t.type === 'income')
+        .reduce((acc, t) => acc + t.amount, 0);
+
+      const expense = filteredTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((acc, t) => acc + t.amount, 0);
+
+      document.getElementById('totalIncome').textContent = 'Rp ' + income.toLocaleString();
+      document.getElementById('totalExpense').textContent = 'Rp ' + expense.toLocaleString();
+      document.getElementById('totalTransactions').textContent = filteredTransactions.length;
+      document.getElementById('totalItemsCount').textContent = filteredTransactions.length;
+    }
+
+    // Render transaction items and pagination
+    function renderTransactions() {
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const currentItems = filteredTransactions.slice(startIndex, endIndex);
+      const container = document.getElementById('transactionContainer');
+
+      container.innerHTML = currentItems.map(item => `
+        <div class="transaction-item flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+              <i class="${item.icon} ${item.type === 'income' ? 'text-green-500' : 'text-red-500'}"></i>
+            </div>
+            <div>
+              <p class="text-gray-800 dark:text-white font-medium">${item.description}</p>
+              <p class="text-gray-500 dark:text-gray-400 text-sm">${item.category} | ${item.date}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-bold ${item.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">Rp ${item.amount.toLocaleString()}</p>
+          </div>
+        </div>
+      `).join('');
+
+      updatePagination();
+    }
+
+    function updatePagination() {
+      const totalItems = filteredTransactions.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+      document.getElementById('totalItems').textContent = totalItems;
+      document.getElementById('startItem').textContent = totalItems ? (currentPage - 1) * itemsPerPage + 1 : 0;
+      document.getElementById('endItem').textContent = Math.min(currentPage * itemsPerPage, totalItems);
+      document.getElementById('paginationContainer').style.display = totalPages > 1 ? 'block' : 'none';
+
+      const pageNumbers = document.getElementById('pageNumbers');
+      pageNumbers.innerHTML = '';
+
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.className = `pagination-btn px-3 py-2 rounded-lg text-sm ${i === currentPage ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'} transition-all`;
+        btn.addEventListener('click', () => {
+          currentPage = i;
+          renderTransactions();
+        });
+        pageNumbers.appendChild(btn);
+      }
+
+      document.getElementById('prevPage').disabled = currentPage === 1;
+      document.getElementById('nextPage').disabled = currentPage === totalPages;
+    }
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTransactions();
+      }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTransactions();
+      }
+    });
+
+    // Initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      allTransactions = sampleTransactions;
+      applyFilters();
+    });
+  </script>
+</body>
+</html>

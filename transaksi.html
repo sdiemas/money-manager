@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tambah Transaksi - Dashboard Keuangan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        .slide-in {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .slide-in.open {
+            transform: translateX(0);
+        }
+
+        .form-animation {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-animation {
+            animation: successPulse 0.5s ease-out;
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 font-sans transition-colors duration-300">
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed top-0 right-0 lg:left-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl z-50 slide-in lg:slide-in lg:open lg:transform-none lg:transition-none">
+        <div class="p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-wallet text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-800 dark:text-white">Keuangan Saya</h1>
+                </div>
+                <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="space-y-2">
+                <a href="dashboard.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="transaksi.html" class="flex items-center space-x-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-3 rounded-lg">
+                    <i class="fas fa-plus-circle"></i>
+                    <span class="font-medium">Tambah Transaksi</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-history"></i>
+                    <span>Riwayat Transaksi</span>
+                </a>
+                <a href="kategori.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Kategori</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-cog"></i>
+                    <span>Pengaturan</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lg:ml-80 min-h-screen">
+        <!-- Top Bar -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Tambah Transaksi</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mt-1">Catat pemasukan dan pengeluaran Anda</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Dark Mode Toggle -->
+                        <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:block"></i>
+                        </button>
+                        <!-- Mobile Menu Button -->
+                        <button id="mobileMenuButton" class="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Form Content -->
+        <main class="p-6">
+            <div class="max-w-2xl mx-auto">
+                <!-- Transaction Type Toggle -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6 form-animation">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Jenis Transaksi</h3>
+                    <div class="flex space-x-4">
+                        <button id="incomeBtn" class="flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-medium transition-all">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>Pemasukan</span>
+                        </button>
+                        <button id="expenseBtn" class="flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium transition-all hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>Pengeluaran</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Transaction Form -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 form-animation">
+                    <form id="transactionForm" class="space-y-6">
+                        <!-- Amount -->
+                        <div>
+                            <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Jumlah
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">Rp</span>
+                                <input type="text" id="amount" name="amount" 
+                                       class="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                       placeholder="0"
+                                       required>
+                            </div>
+                        </div>
+
+                        <!-- Category -->
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Kategori
+                            </label>
+                            <div class="relative">
+                                <select id="category" name="category" 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none"
+                                        required>
+                                    <option value="">Pilih kategori</option>
+                                    <!-- Income categories -->
+                                    <optgroup id="incomeCategories" label="Pemasukan" class="hidden">
+                                        <option value="gaji">💼 Gaji</option>
+                                        <option value="freelance">💻 Freelance</option>
+                                        <option value="bisnis">🏪 Bisnis</option>
+                                        <option value="investasi">📈 Investasi</option>
+                                        <option value="bonus">🎁 Bonus</option>
+                                        <option value="lainnya-income">➕ Lainnya</option>
+                                    </optgroup>
+                                    <!-- Expense categories -->
+                                    <optgroup id="expenseCategories" label="Pengeluaran">
+                                        <option value="makanan">🍽️ Makanan & Minuman</option>
+                                        <option value="transportasi">🚗 Transportasi</option>
+                                        <option value="belanja">🛒 Belanja</option>
+                                        <option value="tagihan">💳 Tagihan</option>
+                                        <option value="kesehatan">🏥 Kesehatan</option>
+                                        <option value="hiburan">🎬 Hiburan</option>
+                                        <option value="pendidikan">📚 Pendidikan</option>
+                                        <option value="rumah">🏠 Rumah Tangga</option>
+                                        <option value="lainnya-expense">➖ Lainnya</option>
+                                    </optgroup>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Keterangan
+                            </label>
+                            <textarea id="description" name="description" rows="3" 
+                                      class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                      placeholder="Keterangan transaksi (opsional)"></textarea>
+                        </div>
+
+                        <!-- Date -->
+                        <div>
+                            <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Tanggal
+                            </label>
+                            <input type="date" id="date" name="date" 
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                   required>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="flex space-x-4 pt-4">
+                            <button type="button" id="cancelBtn" 
+                                    class="flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium">
+                                Batal
+                            </button>
+                            <button type="submit" id="submitBtn"
+                                    class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center space-x-2">
+                                <span>Simpan Transaksi</span>
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Quick Amount Buttons -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6 form-animation">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Jumlah Cepat</h3>
+                    <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                        <button class="quick-amount-btn px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm font-medium" data-amount="50000">50rb</button>
+                        <button class="quick-amount-btn px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm font-medium" data-amount="100000">100rb</button>
+                        <button class="quick-amount-btn px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm font-medium" data-amount="250000">250rb</button>
+                        <button class="quick-amount-btn px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm font-medium" data-amount="500000">500rb</button>
+                        <button class="quick-amount-btn px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm font-medium" data-amount="1000000">1jt</button>
+                        <button class="quick-amount-btn px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm font-medium" data-amount="2000000">2jt</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full success-animation">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-green-600 dark:text-green-400 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Transaksi Berhasil Disimpan</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">Transaksi Anda telah berhasil ditambahkan ke dalam sistem.</p>
+                <div class="flex space-x-3">
+                    <button id="addMoreBtn" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
+                        Tambah Lagi
+                    </button>
+                    <button id="viewDashboardBtn" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium">
+                        Lihat Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const html = document.documentElement;
+        
+        darkModeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+        });
+        
+        // Mobile menu functionality
+        const mobileMenuButton = document.getElementById('mobileMenuButton');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            sidebar.classList.add('open');
+            mobileOverlay.classList.remove('hidden');
+        });
+        
+        closeSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            mobileOverlay.classList.add('hidden');
+        });
+        
+        mobileOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            mobileOverlay.classList.add('hidden');
+        });
+
+        // Transaction type toggle
+        const incomeBtn = document.getElementById('incomeBtn');
+        const expenseBtn = document.getElementById('expenseBtn');
+        const incomeCategories = document.getElementById('incomeCategories');
+        const expenseCategories = document.getElementById('expenseCategories');
+        const categorySelect = document.getElementById('category');
+        
+        let currentType = 'income';
+        
+        incomeBtn.addEventListener('click', () => {
+            currentType = 'income';
+            incomeBtn.className = 'flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-medium transition-all';
+            expenseBtn.className = 'flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium transition-all hover:bg-gray-50 dark:hover:bg-gray-600';
+            
+            incomeCategories.classList.remove('hidden');
+            expenseCategories.classList.add('hidden');
+            categorySelect.value = '';
+        });
+        
+        expenseBtn.addEventListener('click', () => {
+            currentType = 'expense';
+            expenseBtn.className = 'flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium transition-all';
+            incomeBtn.className = 'flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium transition-all hover:bg-gray-50 dark:hover:bg-gray-600';
+            
+            expenseCategories.classList.remove('hidden');
+            incomeCategories.classList.add('hidden');
+            categorySelect.value = '';
+        });
+
+        // Set today's date as default
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Amount formatting
+        const amountInput = document.getElementById('amount');
+        amountInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^\d]/g, '');
+            if (value) {
+                value = parseInt(value).toLocaleString('id-ID');
+            }
+            e.target.value = value;
+        });
+
+        // Quick amount buttons
+        document.querySelectorAll('.quick-amount-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const amount = parseInt(btn.dataset.amount);
+                amountInput.value = amount.toLocaleString('id-ID');
+            });
+        });
+
+        // Form submission
+        const transactionForm = document.getElementById('transactionForm');
+        const successModal = document.getElementById('successModal');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        transactionForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+            submitBtn.disabled = true;
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Reset button
+                submitBtn.innerHTML = '<span>Simpan Transaksi</span><i class="fas fa-save ml-2"></i>';
+                submitBtn.disabled = false;
+                
+                // Show success modal
+                successModal.classList.remove('hidden');
+                
+                // Reset form
+                transactionForm.reset();
+                document.getElementById('date').valueAsDate = new Date();
+                
+                // Reset to income type
+                incomeBtn.click();
+            }, 1500);
+        });
+
+        // Modal buttons
+        document.getElementById('addMoreBtn').addEventListener('click', () => {
+            successModal.classList.add('hidden');
+        });
+        
+        document.getElementById('viewDashboardBtn').addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+        
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            if (confirm('Apakah Anda yakin ingin membatalkan? Data yang telah diisi akan hilang.')) {
+                transactionForm.reset();
+                document.getElementById('date').valueAsDate = new Date();
+                incomeBtn.click();
+            }
+        });
+
+        // Close modal when clicking outside
+        successModal.addEventListener('click', (e) => {
+            if (e.target === successModal) {
+                successModal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

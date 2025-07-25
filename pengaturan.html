@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan - Dashboard Keuangan Pribadi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        .slide-in {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .slide-in.open {
+            transform: translateX(0);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3b82f6;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .dark input:checked + .slider {
+            background-color: #60a5fa;
+        }
+
+        .profile-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .profile-upload input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 font-sans transition-colors duration-300">
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed top-0 right-0 lg:left-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl z-50 slide-in lg:slide-in lg:open lg:transform-none lg:transition-none">
+        <div class="p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-wallet text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-800 dark:text-white">Keuangan Saya</h1>
+                </div>
+                <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="space-y-2">
+                <a href="index.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="transaksi.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Tambah Transaksi</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-history"></i>
+                    <span>Riwayat Transaksi</span>
+                </a>
+                <a href="kategori.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Kategori</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-3 rounded-lg">
+                    <i class="fas fa-cog"></i>
+                    <span class="font-medium">Pengaturan</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lg:ml-80 min-h-screen">
+        <!-- Top Bar -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Pengaturan</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mt-1">Kelola preferensi dan pengaturan akun Anda</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Dark Mode Toggle -->
+                        <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:block"></i>
+                        </button>
+                        <!-- Mobile Menu Button -->
+                        <button id="mobileMenuButton" class="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Settings Content -->
+        <main class="p-6 space-y-6">
+            <!-- Profil Pengguna -->
+            <section>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-6">Profil Pengguna</h3>
+                    <div class="flex items-start space-x-6">
+                        <div class="relative">
+                            <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-2xl" id="profileIcon"></i>
+                                <img id="profileImage" class="w-20 h-20 rounded-full object-cover hidden">
+                            </div>
+                            <label class="profile-upload absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center cursor-pointer transition-colors">
+                                <i class="fas fa-camera text-white text-sm"></i>
+                                <input type="file" accept="image/*" id="profileImageInput">
+                            </label>
+                        </div>
+                        <div class="flex-1 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nama Lengkap</label>
+                                    <input type="text" id="fullName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Masukkan nama lengkap" value="John Doe">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                                    <input type="email" id="email" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="email@contoh.com" value="john.doe@example.com">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nomor Telepon</label>
+                                <input type="tel" id="phone" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="+62 812-3456-7890" value="+62 812-3456-7890">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button id="saveProfile" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                            <i class="fas fa-save mr-2"></i>Simpan Profil
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pengaturan Tampilan -->
+            <section>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-6">Pengaturan Tampilan</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-800 dark:text-white">Mode Gelap</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Aktifkan tema gelap untuk kenyamanan mata</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="darkModeSwitch">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-800 dark:text-white">Animasi</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Aktifkan animasi dan transisi halus</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="animationSwitch" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-800 dark:text-white">Kompak</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Tampilan lebih padat untuk layar kecil</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="compactSwitch">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pengaturan Mata Uang -->
+            <section>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-6">Pengaturan Mata Uang</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mata Uang Utama</label>
+                            <select id="currency" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                <option value="IDR" selected>Rupiah (IDR)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Format Angka</label>
+                            <select id="numberFormat" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                <option value="id-ID" selected>1.000.000,00</option>                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- Pengaturan Keamanan -->
+            <section>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-6">Keamanan</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-800 dark:text-white">Autentikasi Dua Faktor</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Tingkatkan keamanan akun Anda</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="twoFactorAuth">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button id="changePassword" class="w-full md:w-auto px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                                <i class="fas fa-key mr-2"></i>Ubah Kata Sandi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pengaturan Data -->
+            <section>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-6">Kelola Data</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button id="exportData" class="flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                            <i class="fas fa-download mr-2"></i>
+                            <span>Ekspor Data</span>
+                        </button>
+                        <button id="importData" class="flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                            <i class="fas fa-upload mr-2"></i>
+                            <span>Impor Data</span>
+                        </button>
+                        <button id="resetData" class="flex items-center justify-center px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                            <i class="fas fa-trash mr-2"></i>
+                            <span>Reset Data</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tentang Aplikasi -->
+            <section>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-6">Tentang Aplikasi</h3>
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-wallet text-white text-2xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-white">Keuangan Saya</h4>
+                            <p class="text-gray-600 dark:text-gray-400">Versi 1.0.0</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">
+                        Dashboard keuangan pribadi yang membantu Anda mengelola keuangan dengan mudah dan efisien.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="#" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">Kebijakan Privasi</a>
+                        <span class="text-gray-400">•</span>
+                        <a href="#" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">Syarat & Ketentuan</a>
+                        <span class="text-gray-400">•</span>
+                        <a href="#" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">Bantuan</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="fixed inset-0 bg-black bg-opacity-50 z-60 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Ubah Kata Sandi</h3>
+                <button id="closePasswordModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kata Sandi Lama</label>
+                    <input type="password" id="oldPassword" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kata Sandi Baru</label>
+                    <input type="password" id="newPassword" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <div class="mt-2">
+                        <div class="flex items-center space-x-2 text-xs">
+                            <div class="h-1 bg-gray-200 dark:bg-gray-600 rounded-full flex-1">
+                                <div id="passwordStrength" class="h-1 bg-red-500 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                            <span id="strengthText" class="text-gray-500 dark:text-gray-400">Lemah</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Konfirmasi Kata Sandi</label>
+                    <input type="password" id="confirmPassword" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="cancelPasswordChange" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                    Batal
+                </button>
+                <button id="savePasswordChange" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 z-70 transform translate-x-full transition-transform duration-300">
+        <div class="bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+            <i class="fas fa-check-circle"></i>
+            <span id="toastMessage">Pengaturan berhasil disimpan!</span>
+        </div>
+    </div>
+
+    <script>
+    // Dark mode functionality
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeSwitch = document.getElementById('darkModeSwitch');
+    const html = document.documentElement;
+    
+    // Initialize dark mode
+    const isDarkMode = false;
+    html.classList.toggle('dark', isDarkMode);
+    darkModeSwitch.checked = isDarkMode;
+    
+    function toggleDarkMode() {
+        const isDark = html.classList.toggle('dark');
+        darkModeSwitch.checked = isDark;
+    }
+    
+    darkModeToggle.addEventListener('click', toggleDarkMode);
+    darkModeSwitch.addEventListener('change', toggleDarkMode);
+    
+    // Mobile menu functionality
+    const mobileMenuButton = document.getElementById('mobileMenuButton');
+    const sidebar = document.getElementById('sidebar');
+    const closeSidebar = document.getElementById('closeSidebar');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    
+    mobileMenuButton.addEventListener('click', () => {
+        sidebar.classList.add('open');
+        mobileOverlay.classList.remove('hidden');
+    });
+    
+    closeSidebar.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        mobileOverlay.classList.add('hidden');
+    });
+    
+    mobileOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        mobileOverlay.classList.add('hidden');
+    });
+
+    // Profile image upload
+    const profileImageInput = document.getElementById('profileImageInput');
+    const profileImage = document.getElementById('profileImage');
+    const profileIcon = document.getElementById('profileIcon');
+
+    profileImageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profileImage.src = e.target.result;
+                profileImage.classList.remove('hidden');
+                profileIcon.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Password modal functionality
+    const changePasswordBtn = document.getElementById('changePassword');
+    const passwordModal = document.getElementById('passwordModal');
+    const closePasswordModal = document.getElementById('closePasswordModal');
+    const cancelPasswordChange = document.getElementById('cancelPasswordChange');
+    const savePasswordChange = document.getElementById('savePasswordChange');
+    const newPasswordInput = document.getElementById('newPassword');
+    const passwordStrengthBar = document.getElementById('passwordStrength');
+    const strengthText = document.getElementById('strengthText');
+
+    changePasswordBtn.addEventListener('click', () => {
+        passwordModal.classList.remove('hidden');
+    });
+
+    closePasswordModal.addEventListener('click', () => {
+        passwordModal.classList.add('hidden');
+    });
+
+    cancelPasswordChange.addEventListener('click', () => {
+        passwordModal.classList.add('hidden');
+    });
+
+    // Password strength checker
+    newPasswordInput.addEventListener('input', function() {
+        const password = this.value;
+        let strength = 0;
+
+        if (password.length >= 8) strength += 1;
+        if (/[A-Z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+
+        let width = "0%";
+        let color = "bg-red-500";
+        let text = "Lemah";
+
+        if (strength === 1) {
+            width = "25%";
+            color = "bg-red-500";
+            text = "Lemah";
+        } else if (strength === 2) {
+            width = "50%";
+            color = "bg-yellow-500";
+            text = "Sedang";
+        } else if (strength === 3) {
+            width = "75%";
+            color = "bg-blue-500";
+            text = "Baik";
+        } else if (strength === 4) {
+            width = "100%";
+            color = "bg-green-500";
+            text = "Kuat";
+        }
+
+        passwordStrengthBar.style.width = width;
+        passwordStrengthBar.className = `h-1 rounded-full progress-bar ${color}`;
+        strengthText.textContent = text;
+    });
+
+    // Save password change
+    savePasswordChange.addEventListener('click', () => {
+        const oldPassword = document.getElementById('oldPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            showToast("Semua kolom harus diisi!");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            showToast("Konfirmasi kata sandi tidak sama!");
+            return;
+        }
+
+        // Simulasi penyimpanan sukses
+        passwordModal.classList.add('hidden');
+        showToast("Kata sandi berhasil diubah!");
+    });
+
+    // Toast helper
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        toastMessage.textContent = message;
+        toast.classList.remove('translate-x-full');
+        toast.classList.add('translate-x-0');
+
+        setTimeout(() => {
+            toast.classList.remove('translate-x-0');
+            toast.classList.add('translate-x-full');
+        }, 3000);
+    }
+</script>

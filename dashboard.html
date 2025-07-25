@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Keuangan Pribadi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        .dark .skeleton {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 200% 100%;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .slide-in {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .slide-in.open {
+            transform: translateX(0);
+        }
+
+        .calendar-dropdown {
+            transform: translateY(-10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .calendar-dropdown.show {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-day:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .calendar-day.selected {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .calendar-day.in-range {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .calendar-day.disabled {
+            color: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .dark .calendar-day.disabled {
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 font-sans transition-colors duration-300">
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed top-0 right-0 lg:left-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl z-50 slide-in lg:slide-in lg:open lg:transform-none lg:transition-none">
+        <div class="p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-wallet text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-800 dark:text-white">Keuangan Saya</h1>
+                </div>
+                <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="space-y-2">
+                <a href="#" class="flex items-center space-x-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-3 rounded-lg">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="transaksi.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Tambah Transaksi</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-history"></i>
+                    <span>Riwayat Transaksi</span>
+                </a>
+                <a href="kategori.html" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Kategori</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-cog"></i>
+                    <span>Pengaturan</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lg:ml-80 min-h-screen">
+        <!-- Top Bar -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard Keuangan</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mt-1">Kelola keuangan pribadi Anda dengan mudah</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Dark Mode Toggle -->
+                        <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:block"></i>
+                        </button>
+                        <!-- Mobile Menu Button -->
+                        <button id="mobileMenuButton" class="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <main class="p-6 space-y-6">
+            <!-- Ringkasan Keuangan -->
+            <section>
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Ringkasan Keuangan</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Saldo Saat Ini -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Saldo Saat Ini</p>
+                                <p id="saldoValue" class="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-2">
+                                    <span class="skeleton h-8 w-32 rounded block"></span>
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-wallet text-blue-600 dark:text-blue-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pemasukan -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pemasukan</p>
+                                <p id="pemasukanValue" class="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
+                                    <span class="skeleton h-8 w-32 rounded block"></span>
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-arrow-up text-green-600 dark:text-green-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pengeluaran -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pengeluaran</p>
+                                <p id="pengeluaranValue" class="text-2xl font-bold text-red-600 dark:text-red-400 mt-2">
+                                    <span class="skeleton h-8 w-32 rounded block"></span>
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-arrow-down text-red-600 dark:text-red-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Grafik Keuangan -->
+            <section>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Grafik Keuangan</h3>
+                        <div class="relative">
+                            <button id="dateRangeButton" class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span id="selectedDateRange">1 Jun - 28 Jun 2025</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            
+                            <!-- Calendar Dropdown -->
+                            <div id="calendarDropdown" class="calendar-dropdown absolute right-0 top-12 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                                <div class="p-4">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <button id="prevMonth" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                            <i class="fas fa-chevron-left text-gray-600 dark:text-gray-400"></i>
+                                        </button>
+                                        <h4 id="currentMonth" class="font-semibold text-gray-800 dark:text-white"></h4>
+                                        <button id="nextMonth" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                            <i class="fas fa-chevron-right text-gray-600 dark:text-gray-400"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="calendar-grid text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                        <div class="text-center py-2 font-medium">Min</div>
+                                        <div class="text-center py-2 font-medium">Sen</div>
+                                        <div class="text-center py-2 font-medium">Sel</div>
+                                        <div class="text-center py-2 font-medium">Rab</div>
+                                        <div class="text-center py-2 font-medium">Kam</div>
+                                        <div class="text-center py-2 font-medium">Jum</div>
+                                        <div class="text-center py-2 font-medium">Sab</div>
+                                    </div>
+                                    
+                                    <div id="calendarGrid" class="calendar-grid text-sm"></div>
+                                    
+                                    <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                        <button id="clearSelection" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-sm">
+                                            Bersihkan
+                                        </button>
+                                        <div class="flex space-x-2">
+                                            <button id="cancelSelection" class="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                                                Batal
+                                            </button>
+                                            <button id="applySelection" class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                                                Terapkan
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative h-80">
+                        <canvas id="financeChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transaksi Terakhir -->
+            <section>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Transaksi Terakhir</h3>
+                        <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">
+                            Lihat Semua
+                        </a>
+                    </div>
+                    <div class="space-y-4" id="transactionList">
+                        <!-- Loading skeleton -->
+                        <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <div class="skeleton w-10 h-10 rounded-lg"></div>
+                                <div>
+                                    <div class="skeleton h-4 w-24 rounded mb-2"></div>
+                                    <div class="skeleton h-3 w-16 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton h-4 w-20 rounded"></div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <div class="skeleton w-10 h-10 rounded-lg"></div>
+                                <div>
+                                    <div class="skeleton h-4 w-24 rounded mb-2"></div>
+                                    <div class="skeleton h-3 w-16 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton h-4 w-20 rounded"></div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <div class="skeleton w-10 h-10 rounded-lg"></div>
+                                <div>
+                                    <div class="skeleton h-4 w-24 rounded mb-2"></div>
+                                    <div class="skeleton h-3 w-16 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton h-4 w-20 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Global variables
+        let financeChart;
+        let currentDate = new Date(2025, 5, 28); // June 28, 2025
+        let selectedStartDate = null;
+        let selectedEndDate = null;
+        let tempStartDate = null;
+        let tempEndDate = null;
+        let isSelectingRange = false;
+
+        // Sample financial data for different date ranges
+        const financialData = {
+            '2025-06': {
+                weeks: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'],
+                income: [2000000, 2500000, 2000000, 2000000],
+                expenses: [1500000, 1800000, 1400000, 1500000],
+                summary: { balance: 25000000, income: 8500000, expenses: 6200000 }
+            },
+            '2025-05': {
+                weeks: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'],
+                income: [1800000, 2200000, 2400000, 1900000],
+                expenses: [1600000, 1700000, 1500000, 1400000],
+                summary: { balance: 23700000, income: 8300000, expenses: 6200000 }
+            },
+            '2025-04': {
+                weeks: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'],
+                income: [2200000, 1900000, 2100000, 2300000],
+                expenses: [1400000, 1600000, 1800000, 1500000],
+                summary: { balance: 22100000, income: 8500000, expenses: 6300000 }
+            }
+        };
+
+        // Dark mode functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const html = document.documentElement;
+        
+        const currentTheme = 'light';
+        html.classList.toggle('dark', false);
+        
+        darkModeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+        });
+        
+        // Mobile menu functionality
+        const mobileMenuButton = document.getElementById('mobileMenuButton');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            sidebar.classList.add('open');
+            mobileOverlay.classList.remove('hidden');
+        });
+        
+        closeSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            mobileOverlay.classList.add('hidden');
+        });
+        
+        mobileOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            mobileOverlay.classList.add('hidden');
+        });
+
+        // Calendar functionality
+        const dateRangeButton = document.getElementById('dateRangeButton');
+        const calendarDropdown = document.getElementById('calendarDropdown');
+        const prevMonthButton = document.getElementById('prevMonth');
+        const nextMonthButton = document.getElementById('nextMonth');
+        const currentMonthDisplay = document.getElementById('currentMonth');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const clearSelectionButton = document.getElementById('clearSelection');
+        const cancelSelectionButton = document.getElementById('cancelSelection');
+        const applySelectionButton = document.getElementById('applySelection');
+        const selectedDateRangeDisplay = document.getElementById('selectedDateRange');
+
+        // Set default date range (current month)
+        selectedStartDate = new Date(2025, 5, 1);
+        selectedEndDate = new Date(2025, 5, 28);
+
+        function formatDate(date) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+        }
+
+        function updateDateRangeDisplay() {
+            if (selectedStartDate && selectedEndDate) {
+                selectedDateRangeDisplay.textContent = `${formatDate(selectedStartDate)} - ${formatDate(selectedEndDate)}`;
+            }
+        }
+
+        function toggleCalendar() {
+            const isVisible = calendarDropdown.classList.contains('show');
+            if (isVisible) {
+                calendarDropdown.classList.remove('show');
+            } else {
+                calendarDropdown.classList.add('show');
+                renderCalendar();
+            }
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            currentMonthDisplay.textContent = `${months[month]} ${year}`;
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            calendarGrid.innerHTML = '';
+            
+            // Empty cells for days before the first day of the month
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day disabled';
+                calendarGrid.appendChild(emptyCell);
+            }
+            
+            // Days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                dayCell.textContent = day;
+                
+                const cellDate = new Date(year, month, day);
+                
+                // Check if this day is selected
+                if (tempStartDate && tempEndDate) {
+                    if (cellDate.getTime() === tempStartDate.getTime() || cellDate.getTime() === tempEndDate.getTime()) {
+                        dayCell.classList.add('selected');
+                    } else if (cellDate > tempStartDate && cellDate < tempEndDate) {
+                        dayCell.classList.add('in-range');
+                    }
+                } else if (tempStartDate && cellDate.getTime() === tempStartDate.getTime()) {
+                    dayCell.classList.add('selected');
+                }
+                
+                dayCell.addEventListener('click', () => selectDate(cellDate));
+                calendarGrid.appendChild(dayCell);
+            }
+        }
+
+        function selectDate(date) {
+            if (!isSelectingRange) {
+                // First date selection
+                tempStartDate = date;
+                tempEndDate = null;
+                isSelectingRange = true;
+            } else {
+                // Second date selection
+                if (date < tempStartDate) {
+                    tempEndDate = tempStartDate;
+                    tempStartDate = date;
+                } else {
+                    tempEndDate = date;
+                }
+                isSelectingRange = false;
+            }
+            renderCalendar();
+        }
+
+        function clearSelection() {
+            tempStartDate = null;
+            tempEndDate = null;
+            isSelectingRange = false;
+            renderCalendar();
+        }
+
+        function cancelSelection() {
+            tempStartDate = selectedStartDate;
+            tempEndDate = selectedEndDate;
+            isSelectingRange = false;
+            calendarDropdown.classList.remove('show');
+        }
+
+        function applySelection() {
+            if (tempStartDate && tempEndDate) {
+                selectedStartDate = tempStartDate;
+                selectedEndDate = tempEndDate;
+                updateDateRangeDisplay();
+                updateChartData();
+                calendarDropdown.classList.remove('show');
+            }
+        }
+
+        function updateChartData() {
+            // Get the month-year key for the selected date range
+            const monthKey = `${selectedStartDate.getFullYear()}-${String(selectedStartDate.getMonth() + 1).padStart(2, '0')}`;
+            const data = financialData[monthKey] || financialData['2025-06']; // Default to June 2025
+            
+            // Update chart
+            financeChart.data.datasets[0].data = data.income;
+            financeChart.data.datasets[1].data = data.expenses;
+            financeChart.update();
+            
+            // Update summary cards
+            document.getElementById('saldoValue').innerHTML = `Rp ${data.summary.balance.toLocaleString('id-ID')}`;
+            document.getElementById('pemasukanValue').innerHTML = `Rp ${data.summary.income.toLocaleString('id-ID')}`;
+            document.getElementById('pengeluaranValue').innerHTML = `Rp ${data.summary.expenses.toLocaleString('id-ID')}`;
+        }
+
+        // Event listeners
+        dateRangeButton.addEventListener('click', toggleCalendar);
+        prevMonthButton.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+        nextMonthButton.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+        clearSelectionButton.addEventListener('click', clearSelection);
+        cancelSelectionButton.addEventListener('click', cancelSelection);
+        applySelectionButton.addEventListener('click', applySelection);
+
+        // Close calendar when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dateRangeButton.contains(e.target) && !calendarDropdown.contains(e.target)) {
+                calendarDropdown.classList.remove('show');
+            }
+        });
+
+        // Initialize temp selection with current selection
+        tempStartDate = selectedStartDate;
+        tempEndDate = selectedEndDate;
+
+        // Simulate data loading
+        setTimeout(() => {
+            // Update financial summary
+            document.getElementById('saldoValue').innerHTML = 'Rp 25.000.000';
+            document.getElementById('pemasukanValue').innerHTML = 'Rp 8.500.000';
+            document.getElementById('pengeluaranValue').innerHTML = 'Rp 6.200.000';
+            
+            // Load transactions
+            const transactions = [
+                { date: '28 Jun 2025', category: 'Gaji', amount: 5000000, type: 'income', icon: 'fas fa-briefcase', color: 'green' },
+                { date: '27 Jun 2025', category: 'Belanja', amount: 250000, type: 'expense', icon: 'fas fa-shopping-cart', color: 'red' },
+                { date: '26 Jun 2025', category: 'Freelance', amount: 1500000, type: 'income', icon: 'fas fa-laptop-code', color: 'green' },
+                { date: '25 Jun 2025', category: 'Transportasi', amount: 150000, type: 'expense', icon: 'fas fa-car', color: 'red' },
+                { date: '24 Jun 2025', category: 'Makanan', amount: 75000, type: 'expense', icon: 'fas fa-utensils', color: 'red' }
+            ];
+            
+            const transactionList = document.getElementById('transactionList');
+            transactionList.innerHTML = transactions.map(transaction => `
+                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-${transaction.color}-100 dark:bg-${transaction.color}-900/30 rounded-lg flex items-center justify-center">
+                            <i class="${transaction.icon} text-${transaction.color}-600 dark:text-${transaction.color}-400"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800 dark:text-white">${transaction.category}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${transaction.date}</p>
+                        </div>
+                    </div>
+                    <p class="font-semibold text-${transaction.color}-600 dark:text-${transaction.color}-400">
+                        ${transaction.type === 'income' ? '+' : '-'}Rp ${transaction.amount.toLocaleString('id-ID')}
+                    </p>
+                </div>
+            `).join('');
+            
+            // Update date range display
+            updateDateRangeDisplay();
+        }, 2000);
+
+        // Initialize Chart.js
+        const ctx = document.getElementById('financeChart').getContext('2d');
+        financeChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'],
+                datasets: [{
+                    label: 'Pemasukan',
+                    data: [2000000, 2500000, 2000000, 2000000],
+                    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                    borderColor: 'rgba(34, 197, 94, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Pengeluaran',
+                    data: [1500000, 1800000, 1400000, 1500000],
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-color') || '#374151'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp ' + value.toLocaleString('id-ID');
+                            },
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-color') || '#6b7280'
+                        },
+                        grid: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--border-color') || '#e5e7eb'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-color') || '#6b7280'
+                        },
+                        grid: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--border-color') || '#e5e7eb'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Update chart colors on theme change
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    const isDark = html.classList.contains('dark');
+                    financeChart.options.plugins.legend.labels.color = isDark ? '#d1d5db' : '#374151';
+                    financeChart.options.scales.y.ticks.color = isDark ? '#9ca3af' : '#6b7280';
+                    financeChart.options.scales.x.ticks.color = isDark ? '#9ca3af' : '#6b7280';
+                    financeChart.options.scales.y.grid.color = isDark ? '#374151' : '#e5e7eb';
+                    financeChart.options.scales.x.grid.color = isDark ? '#374151' : '#e5e7eb';
+                    financeChart.update();
+                }
+            });
+        });
+        observer.observe(html, { attributes: true });
+    </script>
+</body>
+</html>
